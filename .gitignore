@@ -1,0 +1,23 @@
+Python
+
+pycache/
+*.pyc
+*.pyo
+*.pyd
+*.env
+Virtual environment
+
+venv/
+env/
+Database
+
+*.db
+*.sqlite3
+instance/
+IDE configuration files
+
+.idea/
+.vscode/
+OS-specific files
+
+.DS_Store

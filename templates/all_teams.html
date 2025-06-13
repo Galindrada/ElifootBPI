@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Teams - Elifoot Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+        .team-card {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 15px;
+        }
+        .team-card h2 {
+            background-color: #000080;
+            color: #fff;
+            padding: 5px;
+            margin-top: 0;
+        }
+        .team-details {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        .player-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85em;
+        }
+        .player-table th, .player-table td {
+            border: 1px solid #ccc;
+            padding: 4px;
+            text-align: left;
+        }
+        .player-table th {
+            background-color: #e0e0e0;
+        }
+        .player-table a {
+            color: #000080;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .player-table a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Liga BPI Teams</h1>
+            <nav>
+                <a href="/">Match Day</a>
+                <a href="/all-teams">All Teams</a>
+            </nav>
+        </header>
+
+        <div class="team-grid">
+            {% for team in teams %}
+            <div class="team-card">
+                <h2>{{ team.name }}</h2>
+                <div class="team-details">
+                    <strong>Hometown:</strong> {{ team.hometown }} <br>
+                    <strong>Founded:</strong> {{ team.foundation_year }} <br>
+                    <strong>Stadium Capacity:</strong> {{ "{:,}".format(team.stadium_capacity) }}
+                </div>
+                <table class="player-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Pos</th>
+                            <th>Age</th>
+                            <th>Skill</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for player in team.players %}
+                        <tr>
+                            <td><a href="{{ url_for('player_details', player_id=player.id) }}">{{ player.name }}</a></td>
+                            <td>{{ player.position }}</td>
+                            <td>{{ player.age }}</td>
+                            <td>{{ player.skill }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p>No teams found in the database. Please visit <strong>/populate-db</strong> in your browser once to load the data.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
+
