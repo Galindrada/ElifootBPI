@@ -1,5 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from sqlalchemy import inspect
 
 db = SQLAlchemy()
 
@@ -21,7 +22,8 @@ class Team(db.Model):
     money = db.Column(db.Integer, default=5000000)
     # Foreign key to link to a user. Must be unique so only one user can manage a team.
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True, unique=True)
-    
+    manager_username = db.Column(db.String(80), nullable=True, unique=True)
+    managed_by = db.Column(db.String(80), nullable=False, default="CPU")
     points = db.Column(db.Integer, default=0)
     games_played = db.Column(db.Integer, default=0)
     wins = db.Column(db.Integer, default=0)
@@ -62,4 +64,9 @@ class GameState(db.Model): # FIX: Changed db.model to db.Model
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(50), unique=True, nullable=False)
     value = db.Column(db.String(50), nullable=False)
+
+def setup_database():
+    db.create_all()  # <-- Ensure all tables and columns exist
+    if Team.query.first(): return
+    # ... rest of your setup logic ...
 

@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% block title %}Dashboard - {{ user_team.name }}{% endblock %}
+{% block title %}Dashboard{% if user_team %} - {{ user_team.name }}{% endif %}{% endblock %}
 
 {% block head %}
 <style>
@@ -19,6 +19,12 @@
 {% endblock %}
 
 {% block content %}
+{% if not user_team %}
+    <div class="card" style="margin: 40px auto; max-width: 500px; text-align: center;">
+        <h2>Welcome!</h2>
+        <p>You are not managing a team. Please <a href="{{ url_for('logout') }}">logout</a> and re-register to select a team if any are available.</p>
+    </div>
+{% else %}
 <div class="dashboard-grid">
     <div class="card">
         <h3>Your Squad</h3>
@@ -77,5 +83,6 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}
 
