@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Elifoot Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .landing-container {
+            text-align: center;
+            margin-top: 100px;
+        }
+        .landing-container h1 {
+            font-size: 3rem;
+            color: #FFFF00;
+            text-shadow: 2px 2px #000;
+        }
+        .landing-options a {
+            margin: 0 20px;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="landing-container">
+            <h1>Elifoot Online</h1>
+            <div class="landing-options">
+                <a href="{{ url_for('login') }}" class="button-link">Login</a>
+                <a href="{{ url_for('register') }}" class="button-link">Register</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

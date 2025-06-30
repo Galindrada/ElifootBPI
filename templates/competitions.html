@@ -1,160 +1,111 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Competitions - Elifoot Online</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <style>
-        .page-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-            align-items: start;
-        }
-        .main-column {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .league-table, .scorers-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .league-table th, .league-table td, .scorers-table th, .scorers-table td {
-            border: 1px solid #333;
-            padding: 6px 8px;
-            text-align: left;
-        }
-        .league-table th, .scorers-table th { background-color: #e0e0e0; }
-        .league-table td.team-name, .scorers-table td.player-name { font-weight: bold; }
-        .league-table td.points, .scorers-table td.goals { font-weight: bold; text-align: center; }
-        .league-table td, .scorers-table td { text-align: center; }
-        .league-table .team-name, .scorers-table .player-name { text-align: left; }
-        
-        .card {
-            background: #fff;
-            border: 2px solid #000;
-            padding: 15px;
-        }
-        .fixture-selector {
-            width: 100%;
-            padding: 8px;
-            font-family: inherit;
-            font-size: 1rem;
-            margin-bottom: 15px;
-        }
-        .fixture-round { display: none; }
-        .fixture-round.active { display: block; }
-        .fixture-match {
-            display: flex; justify-content: space-between;
-            padding: 4px 0; border-bottom: 1px solid #eee;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <header>
-            <h1>LIGA BPI</h1>
-            <nav>
-                <a href="/">Match Day</a>
-                <a href="/competitions">Competitions</a>
-                <a href="/all-teams">All Teams</a>
-            </nav>
-        </header>
+{% extends "layout.html" %}
 
-        {% if teams %}
-        <div class="page-grid">
-            <div class="main-column">
-                <div class="card">
-                    <h2>Classification</h2>
-                    <table class="league-table">
-                        <thead>
-                            <tr>
-                                <th>Pos</th>
-                                <th class="team-name">Team</th>
-                                <th>Pts</th><th>GP</th><th>V</th><th>D</th><th>L</th><th>GF</th><th>GC</th><th>GD</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for team in teams %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td class="team-name">{{ team.name }}</td>
-                                <td class="points">{{ team.points }}</td>
-                                <td>{{ team.games_played }}</td><td>{{ team.wins }}</td><td>{{ team.draws }}</td><td>{{ team.losses }}</td>
-                                <td>{{ team.goals_for }}</td><td>{{ team.goals_against }}</td><td>{{ team.goals_for - team.goals_against }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="card">
-                    <h2>Top Goalscorers</h2>
-                    <table class="scorers-table">
-                         <thead>
-                            <tr>
-                                <th>Pos</th>
-                                <th class="player-name">Player</th>
-                                <th class="player-name">Team</th>
-                                <th>Goals</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for player in top_scorers %}
-                            <tr>
-                                <td>{{ loop.index }}</td>
-                                <td class="player-name"><a href="{{ url_for('player_details', player_id=player.id) }}">{{ player.name }}</a></td>
-                                <td class="player-name">{{ player.team.name }}</td>
-                                <td class="goals">{{ player.goals_season }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+{% block title %}Competitions - Elifoot Online{% endblock %}
 
-            <div class="card">
-                <h2>Fixtures</h2>
-                <select id="fixture-selector" class="fixture-selector">
-                    {% for round_num in fixtures.keys()|sort %}
-                    <option value="{{ round_num }}">Fixture {{ round_num }}</option>
+{% block head %}
+<style>
+    .page-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+    .main-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-grid">
+    <div class="main-column">
+        <div class="card">
+            <h2>Classification</h2>
+            <table class="league-table">
+                <thead>
+                    <tr>
+                        <th>Pos</th>
+                        <th class="team-name">Team</th>
+                        <th>Pts</th><th>GP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GC</th><th>GD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in teams %}
+                    <tr {% if team.id == user_team.id %}class="highlight-row"{% endif %}>
+                        <td>{{ loop.index }}</td>
+                        <td class="team-name">{{ team.name }}</td>
+                        <td>{{ team.points }}</td><td>{{ team.games_played }}</td><td>{{ team.wins }}</td><td>{{ team.draws }}</td><td>{{ team.losses }}</td>
+                        <td>{{ team.goals_for }}</td><td>{{ team.goals_against }}</td><td>{{ team.goals_for - team.goals_against }}</td>
+                    </tr>
                     {% endfor %}
-                </select>
-
-                <div id="fixtures-container">
-                    {% for round_num, matches in fixtures.items() %}
-                    <div id="round-{{ round_num }}" class="fixture-round">
-                        {% for match in matches %}
-                        <div class="fixture-match">
-                            <span>{{ match.home_team.name }}</span>
-                            <span>vs</span>
-                            <span>{{ match.away_team.name }}</span>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
+                </tbody>
+            </table>
         </div>
-        {% else %}
-        <p>No teams found. Go to <a href="/populate-db">/populate-db</a> to initialize the league.</p>
-        {% endif %}
+        <div class="card">
+            <h2>Top Goalscorers</h2>
+            <table class="scorers-table">
+                 <thead>
+                    <tr>
+                        <th>Pos</th>
+                        <th class="player-name">Player</th>
+                        <th class="player-name">Team</th>
+                        <th>Goals</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for player in top_scorers %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td class="player-name"><a href="{{ url_for('player_details', player_id=player.id) }}">{{ player.name }}</a></td>
+                        <td class="player-name">{{ player.team.name }}</td>
+                        <td class="goals">{{ player.goals_season }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const selector = document.getElementById('fixture-selector');
-            const container = document.getElementById('fixtures-container');
-            function showRound(roundNum) {
-                container.querySelectorAll('.fixture-round').forEach(el => el.classList.remove('active'));
-                const roundToShow = container.querySelector(`#round-${roundNum}`);
-                if (roundToShow) roundToShow.classList.add('active');
-            }
-            selector.addEventListener('change', () => showRound(selector.value));
-            if (selector.options.length > 0) showRound(selector.options[0].value);
-        });
-    </script>
-</body>
-</html>
+    <div class="card">
+        <h2>Fixtures</h2>
+        <select id="fixture-selector" class="fixture-selector">
+            {% for round_num in fixtures.keys()|sort %}
+            <option value="{{ round_num }}">Fixture {{ round_num }}</option>
+            {% endfor %}
+        </select>
+
+        <div id="fixtures-container">
+            {% for round_num, matches in fixtures.items() %}
+            <div id="round-{{ round_num }}" class="fixture-round">
+                {% for match in matches %}
+                <div class="fixture-match">
+                    <span>{{ match.home_team.name }}</span>
+                    <span>vs</span>
+                    <span>{{ match.away_team.name }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const selector = document.getElementById('fixture-selector');
+        const container = document.getElementById('fixtures-container');
+        function showRound(roundNum) {
+            container.querySelectorAll('.fixture-round').forEach(el => el.classList.remove('active'));
+            const roundToShow = container.querySelector(`#round-${roundNum}`);
+            if (roundToShow) roundToShow.classList.add('active');
+        }
+        selector.addEventListener('change', () => showRound(selector.value));
+        if (selector.options.length > 0) showRound(selector.options[0].value);
+    });
+</script>
+{% endblock %}
 

@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard - {{ user_team.name }}{% endblock %}
+
+{% block head %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr; /* Two columns */
+        gap: 20px;
+        align-items: start;
+    }
+    .right-column {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-grid">
+    <div class="card">
+        <h3>Your Squad</h3>
+        <table class="player-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Pos</th>
+                    <th>Age</th>
+                    <th>Skill</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for player in user_team.players|sort(attribute='position') %}
+                <tr>
+                    <td><a href="{{ url_for('player_details', player_id=player.id) }}">{{ player.name }}</a></td>
+                    <td>{{ player.position }}</td>
+                    <td>{{ player.age }}</td>
+                    <td>{{ player.skill }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="right-column">
+        <div class="card">
+            <h3>Club Information</h3>
+            <p><strong>Founded:</strong> {{ user_team.foundation_year }}</p>
+            <p><strong>Hometown:</strong> {{ user_team.hometown }}</p>
+            <p><strong>Stadium Capacity:</strong> {{ "{:,}".format(user_team.stadium_capacity) }}</p>
+            <p><strong>Manager:</strong> {{ current_user.username }}</p>
+        </div>
+        
+        <div class="card">
+            <h3>League Classification</h3>
+            <table class="league-table">
+                <thead>
+                    <tr>
+                        <th>Pos</th>
+                        <th class="team-name">Team</th>
+                        <th>Pts</th><th>GP</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for team in all_teams %}
+                    <tr {% if team.id == user_team.id %}class="highlight-row"{% endif %}>
+                        <td>{{ loop.index }}</td>
+                        <td class="team-name">{{ team.name }}</td>
+                        <td>{{ team.points }}</td><td>{{ team.games_played }}</td><td>{{ team.wins }}</td><td>{{ team.draws }}</td><td>{{ team.losses }}</td>
+                        <td>{{ team.goals_for }}</td><td>{{ team.goals_against }}</td><td>{{ team.goals_for - team.goals_against }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

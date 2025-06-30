@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- The title will be defined in each child template -->
+    <title>{% block title %}Elifoot Online{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Any other head content can go here -->
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <div class="container">
+        {% if current_user.is_authenticated %}
+        <header>
+            <h1>{{ current_user.team.name if current_user.team else "Elifoot Online" }}</h1>
+            <nav>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('match_day') }}">Match Day</a>
+                <a href="{{ url_for('competitions') }}">Competitions</a>
+                <a href="{{ url_for('all_teams') }}">All Teams</a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </header>
+        {% endif %}
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- The main content from child templates will be injected here -->
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Scripts can be loaded here -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

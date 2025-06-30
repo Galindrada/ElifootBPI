@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Menu - Elifoot Online</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Main Menu</h1>
+            <nav>
+                <span>Welcome, {{ current_user.username }}</span>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </nav>
+        </header>
+        <div class="main-content-centered">
+            {% if current_user.team %}
+                <a href="{{ url_for('dashboard') }}" class="button-link-large">Go to Dashboard</a>
+            {% else %}
+                <p>You are not managing a team. Please logout and re-register to select a team if any are available.</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>
+

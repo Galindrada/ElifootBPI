@@ -86,3 +86,160 @@ button {
 button:active {
     border-style: inset;
 }
+
+.auth-container {
+    max-width: 500px;
+    margin: 50px auto;
+    background: #fff;
+    padding: 20px;
+    border: 2px solid #000;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-control {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+    border: 1px solid #000;
+    font-family: inherit;
+}
+
+.auth-link {
+    margin-top: 15px;
+    text-align: center;
+}
+
+.main-content-centered {
+    text-align: center;
+    padding: 50px 0;
+}
+
+.button-link-large {
+    display: inline-block;
+    padding: 20px 40px;
+    margin: 10px;
+    font-size: 1.5rem;
+    text-decoration: none;
+    color: #000;
+    background-color: #C0C0C0;
+    border: 2px outset #FFFFFF;
+}
+
+.button-link-large:active {
+    border-style: inset;
+}
+
+.alert {
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+}
+
+.alert-success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.alert-danger { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+.alert-info { color: #0c5460; background-color: #d1ecf1; border-color: #bee5eb; }
+.alert-warning { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+
+.list-container {
+    margin-top: 20px;
+}
+
+.list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #000;
+    margin-bottom: 10px;
+}
+
+
+.team-selection-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.team-tile {
+    display: block;
+    border: 1px solid #000;
+    cursor: pointer;
+}
+
+.team-tile input[type="radio"] {
+    display: none; /* Hide the actual radio button */
+}
+
+.team-tile-content {
+    padding: 10px;
+    background-color: #f0f0f0;
+    text-align: center;
+}
+
+.team-tile-content strong {
+    display: block;
+    font-size: 0.9rem;
+}
+.team-tile-content span {
+    font-size: 0.8rem;
+    color: #555;
+}
+
+/* Style for selected tile */
+.team-tile input[type="radio"]:checked + .team-tile-content {
+    background-color: #000080;
+    color: #FFFF00;
+    border-color: #FFFF00;
+}
+
+.team-tile input[type="radio"]:checked + .team-tile-content span {
+    color: #fff;
+}
+
+/* Add these styles for the improved navigation */
+header nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px 0;
+}
+
+header nav a {
+    text-decoration: none;
+    color: #000;
+    background-color: #C0C0C0;
+    padding: 8px 15px;
+    border: 2px outset #FFFFFF;
+    border-radius: 8px; /* Rounded corners */
+    font-weight: bold;
+    box-shadow: 2px 2px 3px rgba(0,0,0,0.2); /* Subtle shadow for depth */
+    transition: all 0.1s ease-in-out;
+}
+
+header nav a:hover {
+    background-color: #d8d8d8;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+header nav a:active {
+    border-style: inset;
+    box-shadow: inset 2px 2px 3px rgba(0,0,0,0.2);
+}
+
+.highlight-row {
+    background-color: #fff3cd !important;
+    font-weight: bold;
+}
+

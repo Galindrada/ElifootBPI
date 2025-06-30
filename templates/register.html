@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+{% block title %}Register{% endblock %}
+
+{% block head %}
+<style>
+    .team-selection-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+    .team-tile {
+        display: block;
+        border: 1px solid #000;
+        cursor: pointer;
+    }
+    .team-tile input[type="radio"] {
+        display: none; /* Hide the actual radio button */
+    }
+    .team-tile-content {
+        padding: 10px;
+        background-color: #f0f0f0;
+        text-align: center;
+    }
+    .team-tile-content strong {
+        display: block;
+        font-size: 0.9rem;
+    }
+    .team-tile-content span {
+        font-size: 0.8rem;
+        color: #555;
+    }
+    /* Style for selected tile */
+    .team-tile input[type="radio"]:checked + .team-tile-content {
+        background-color: #000080;
+        color: #FFFF00;
+        border-color: #FFFF00;
+    }
+    .team-tile input[type="radio"]:checked + .team-tile-content span {
+        color: #fff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container auth-container">
+    <h2>Register New Manager</h2>
+    <form method="POST" action="">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label>Age</label>
+            <input type="number" name="age" class="form-control" required>
+        </div>
+         <div class="form-group">
+            <label>Birthplace</label>
+            <input type="text" name="birthplace" class="form-control" required>
+        </div>
+        
+        <div class="form-group">
+            <label>Choose Your Team</label>
+            <div class="team-selection-grid">
+                {% for team in available_teams %}
+                <label class="team-tile">
+                    <input type="radio" name="team_id" value="{{ team.id }}" required>
+                    <div class="team-tile-content">
+                        <strong>{{ team.name }}</strong>
+                        <span>{{ team.hometown }}</span>
+                    </div>
+                </label>
+                {% else %}
+                <p>No teams available to manage. The league is full!</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="button-link" {% if not available_teams %}disabled{% endif %}>Register</button>
+        </div>
+    </form>
+    <div class="auth-link">
+        <small>Already have an account? <a href="{{ url_for('login') }}">Log In</a></small>
+    </div>
+</div>
+{% endblock %}
+
