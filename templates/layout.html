@@ -16,7 +16,6 @@
             <h1>{{ current_user.team.name if current_user.team else "Elifoot Online" }}</h1>
             <nav>
                 <a href="{{ url_for('dashboard') }}">Dashboard</a>
-                <a href="{{ url_for('match_day') }}">Match Day</a>
                 <a href="{{ url_for('competitions') }}">Competitions</a>
                 <a href="{{ url_for('all_teams') }}">All Teams</a>
                 <a href="{{ url_for('logout') }}">Logout</a>

@@ -143,7 +143,7 @@ def create_base_db():
 
     from sqlalchemy import create_engine
     engine = create_engine(f'sqlite:///{base_db_path}')
-    from models import Team, Player, db
+    from models import Team, Player, Match, GameState, db
     db.metadata.create_all(engine)
     from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=engine)
@@ -181,6 +181,29 @@ def create_base_db():
                 stats = {'attack': random.randint(70,90), 'defense': random.randint(20,45), 'power': random.randint(55,80), 'shot': random.randint(70,90), 'set_pieces': random.randint(40,65)}
             player = Player(name=f"{random.choice(player_names)} {random.choice(player_surnames)}", age=random.randint(18, 34), position=pos, skill=round(sum(stats.values())/len(stats)), team_id=team.id, **stats)
             session.add(player)
+    session.commit()
+    # --- Fixtures and GameState ---
+    all_teams = session.query(Team).all()
+    if len(all_teams) % 2 != 0:
+        all_teams.append(None)
+    n = len(all_teams)
+    schedule = []
+    for i in range(n - 1):
+        round_fixtures = []
+        for j in range(n // 2):
+            home, away = all_teams[j], all_teams[n - 1 - j]
+            if home and away:
+                round_fixtures.append((home, away))
+        schedule.append(round_fixtures)
+        all_teams.insert(1, all_teams.pop())
+    for round_num, round_fixtures in enumerate(schedule, 1):
+        for home_team, away_team in round_fixtures:
+            session.add(Match(round=round_num, home_team_id=home_team.id, away_team_id=away_team.id))
+    total_rounds = n - 1
+    for round_num, round_fixtures in enumerate(schedule, 1):
+        for home_team, away_team in round_fixtures:
+            session.add(Match(round=round_num + total_rounds, home_team_id=away_team.id, away_team_id=home_team.id))
+    session.add(GameState(key='current_round', value='1'))
     session.commit()
     session.close()
 
@@ -253,119 +276,172 @@ def dashboard():
     import os
     db_path = os.path.join(app.instance_path, f'elifoot_{current_user.username}.db')
     from sqlalchemy import create_engine
-    from sqlalchemy.orm import sessionmaker
-    from models import Team
+    from sqlalchemy.orm import sessionmaker, joinedload
+    from models import Team, Match, GameState
     engine = create_engine(f'sqlite:///{db_path}')
     Session = sessionmaker(bind=engine)
     session = Session()
     user_team = session.query(Team).options(joinedload(Team.players)).filter_by(managed_by=current_user.username).first()
-    print('Team found for this user (direct engine):', user_team)
     all_teams = session.query(Team).order_by(Team.points.desc(), (Team.goals_for - Team.goals_against).desc(), Team.goals_for.desc()).all()
+    # Match day data
+    current_round_state = session.query(GameState).filter_by(key='current_round').first()
+    current_round = int(current_round_state.value) if current_round_state else 1
+    matches_this_round = session.query(Match).options(joinedload(Match.home_team), joinedload(Match.away_team)).filter_by(round=current_round).all()
+    team_count = session.query(Team).count()
+    total_rounds = (team_count - 1) * 2 if team_count > 0 else 0
+    all_rounds_played = current_round > total_rounds
+    print('Current round:', current_round)
+    print('Matches this round:', matches_this_round)
+    print('Total matches:', len(matches_this_round))
+    print('All rounds played:', all_rounds_played)
     session.close()
     if not user_team:
-        return render_template('dashboard.html', user_team=None, all_teams=[])
-    return render_template('dashboard.html', user_team=user_team, all_teams=all_teams)
+        return render_template('dashboard.html', user_team=None, all_teams=[], matches=[], current_round=1, all_rounds_played=True)
+    return render_template('dashboard.html', user_team=user_team, all_teams=all_teams, matches=matches_this_round, current_round=current_round, all_rounds_played=all_rounds_played)
 
 @app.route('/next-fixture')
 @login_required
 def next_fixture():
-    # ... (Same as before)
-    current_round_state = GameState.query.filter_by(key='current_round').first()
+    import os
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from models import GameState
+    db_path = os.path.join(app.instance_path, f'elifoot_{current_user.username}.db')
+    engine = create_engine(f'sqlite:///{db_path}')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    current_round_state = session.query(GameState).filter_by(key='current_round').first()
     if current_round_state:
         new_round = int(current_round_state.value) + 1
         current_round_state.value = str(new_round)
-        db.session.commit()
-    return redirect(url_for('match_day'))
-
-@app.route('/match-day')
-@login_required
-def match_day():
-    # ... (Same as before)
-    current_round_state = GameState.query.filter_by(key='current_round').first()
-    current_round = int(current_round_state.value) if current_round_state else 1
-    matches_this_round = Match.query.filter_by(round=current_round).all()
-    team_count = Team.query.count()
-    total_rounds = (team_count - 1) * 2 if team_count > 0 else 0
-    all_rounds_played = current_round > total_rounds
-    return render_template('index.html', matches=matches_this_round, current_round=current_round, all_rounds_played=all_rounds_played)
+        session.commit()
+    session.close()
+    return redirect(url_for('dashboard'))
 
 @app.route('/competitions')
 @login_required
 def competitions():
-    # ... (Same as before)
-    teams = Team.query.order_by(Team.points.desc(), (Team.goals_for - Team.goals_against).desc(), Team.goals_for.desc()).all()
-    all_matches = Match.query.order_by(Match.round, Match.id).all()
+    import os
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker, joinedload
+    from models import Team, Player, Match
+    db_path = os.path.join(app.instance_path, f'elifoot_{current_user.username}.db')
+    engine = create_engine(f'sqlite:///{db_path}')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    teams = session.query(Team).order_by(Team.points.desc(), (Team.goals_for - Team.goals_against).desc(), Team.goals_for.desc()).all()
+    all_matches = session.query(Match)\
+        .options(joinedload(Match.home_team), joinedload(Match.away_team))\
+        .order_by(Match.round, Match.id).all()
     fixtures = {r: [m for m in all_matches if m.round == r] for r in range(1, 23)}
-    top_scorers = Player.query.order_by(Player.goals_season.desc()).limit(10).all()
-    return render_template('competitions.html', teams=teams, fixtures=fixtures, top_scorers=top_scorers, user_team=current_user.team)
+    top_scorers = session.query(Player).options(joinedload(Player.team)).order_by(Player.goals_season.desc()).limit(10).all()
+    user_team = session.query(Team).filter_by(managed_by=current_user.username).first()
+    session.close()
+    return render_template('competitions.html', teams=teams, fixtures=fixtures, top_scorers=top_scorers, user_team=user_team)
 
 @app.route('/all-teams')
 @login_required
 def all_teams():
-    # ... (Same as before)
-    teams = Team.query.order_by(Team.name).all()
-    return render_template('all_teams.html', teams=teams, user_team=current_user.team)
+    import os
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker, joinedload
+    from models import Team
+    db_path = os.path.join(app.instance_path, f'elifoot_{current_user.username}.db')
+    engine = create_engine(f'sqlite:///{db_path}')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    teams = session.query(Team).options(joinedload(Team.players)).order_by(Team.name).all()
+    user_team = session.query(Team).filter_by(managed_by=current_user.username).first()
+    session.close()
+    return render_template('all_teams.html', teams=teams, user_team=user_team)
 
-@app.route('/player/<int:player_id>')
+@app.route('/player/<team_name>/<player_name>')
 @login_required
-def player_details(player_id):
-    # ... (Same as before)
-    player = Player.query.get_or_404(player_id)
+def player_details(team_name, player_name):
+    import os
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker, joinedload
+    from models import Team, Player
+    db_path = os.path.join(app.instance_path, f'elifoot_{current_user.username}.db')
+    engine = create_engine(f'sqlite:///{db_path}')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    team = session.query(Team).filter_by(name=team_name).first()
+    if not team:
+        session.close()
+        return f"Team '{team_name}' not found.", 404
+    player = session.query(Player).options(joinedload(Player.team)).filter_by(name=player_name, team_id=team.id).first()
+    session.close()
+    if not player:
+        return f"Player '{player_name}' not found in team '{team_name}'.", 404
     return render_template('player.html', player=player)
 
 # --- SocketIO Handlers (Unchanged) ---
 @socketio.on('start_fixture_simulation')
 def handle_start_fixture_simulation(data=None):
-    from sqlalchemy.orm import joinedload
-    current_round_state = GameState.query.filter_by(key='current_round').first()
+    import os
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker, joinedload
+    from flask_login import current_user
+    from models import Team, Player, Match, GameState
+    db_path = os.path.join(app.instance_path, f'elifoot_{current_user.username}.db')
+    engine = create_engine(f'sqlite:///{db_path}')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    current_round_state = session.query(GameState).filter_by(key='current_round').first()
     if not current_round_state:
         emit('log_message', {'data': 'No current round found.'})
+        session.close()
         return
     current_round = int(current_round_state.value)
-    matches = Match.query.options(joinedload(Match.home_team), joinedload(Match.away_team)).filter_by(round=current_round, played=False).all()
+    matches = session.query(Match).options(joinedload(Match.home_team), joinedload(Match.away_team)).filter_by(round=current_round, played=False).all()
     if not matches:
         emit('log_message', {'data': 'No matches to simulate for this round.'})
         emit('fixture_finished')
+        session.close()
         return
 
+    import random
+    from time import sleep
     scores = {match.id: {'home': 0, 'away': 0} for match in matches}
     match_events = {match.id: [] for match in matches}
-    goal_scorers = {match.id: {'home': [], 'away': []} for match in matches}
     minutes = 90
     for minute in range(1, minutes + 1):
         for match in matches:
-            if random.random() < 0.04:  # ~4% chance of a goal per match per minute
+            if random.random() < 0.04:
                 scoring_team = 'home' if random.random() < 0.5 else 'away'
                 scores[match.id][scoring_team] += 1
-                # Select a random player from the scoring team
                 if scoring_team == 'home':
-                    players = Player.query.filter_by(team_id=match.home_team_id).all()
+                    players = session.query(Player).filter_by(team_id=match.home_team_id).all()
                 else:
-                    players = Player.query.filter_by(team_id=match.away_team_id).all()
+                    players = session.query(Player).filter_by(team_id=match.away_team_id).all()
                 if players:
                     scorer = random.choice(players)
                     scorer.goals_season += 1
-                    db.session.commit()
+                    session.commit()
                     event = f"{minute}' - Goal! {scorer.name} ({match.home_team.name if scoring_team == 'home' else match.away_team.name})"
                 else:
                     event = f"{minute}' - Goal! {match.home_team.name if scoring_team == 'home' else match.away_team.name} (no player found)"
                 match_events[match.id].append(event)
                 emit('log_message', {'data': event})
         emit('minute_update', {'minute': minute, 'scores': scores})
-        sleep(0.05)  # Short delay for realism (reduce if needed)
+        sleep(0.05)
 
-    # Update DB with results
     for match in matches:
         match.home_score = scores[match.id]['home']
         match.away_score = scores[match.id]['away']
         match.played = True
-        # Update team stats
         match.home_team.goals_for += match.home_score
         match.home_team.goals_against += match.away_score
         match.away_team.goals_for += match.away_score
         match.away_team.goals_against += match.home_score
         match.home_team.games_played += 1
         match.away_team.games_played += 1
+        # Increment games played for all players on both teams
+        home_players = session.query(Player).filter_by(team_id=match.home_team_id).all()
+        away_players = session.query(Player).filter_by(team_id=match.away_team_id).all()
+        for p in home_players + away_players:
+            p.games_played_season += 1
         if match.home_score > match.away_score:
             match.home_team.wins += 1
             match.home_team.points += 3
@@ -379,7 +455,8 @@ def handle_start_fixture_simulation(data=None):
             match.away_team.draws += 1
             match.home_team.points += 1
             match.away_team.points += 1
-    db.session.commit()
+    session.commit()
+    session.close()
     emit('fixture_finished')
 
 if __name__ == '__main__':
